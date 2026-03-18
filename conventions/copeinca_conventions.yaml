@@ -1,0 +1,46 @@
+# ============================================
+# COPEINCA Conventions — Patrones extraídos del proyecto de referencia
+# ============================================
+# Este archivo se genera automáticamente con: mendex refresh-conventions --mpr <path>
+# SÍ se commitea al repositorio (no contiene datos sensibles, solo patrones).
+# Editable manualmente si se necesita ajustar patrones.
+#
+# Para regenerar: mendex refresh-conventions --mpr reference_project/COPEINCA.mpr
+
+project:
+  name: "COPEINCA"
+  mendix_version: "10.24.16"
+  extracted_at: "1970-01-01T00:00:00Z"  # Placeholder — se actualiza al ejecutar refresh
+  mpr_hash: "pending"  # Se calcula al ejecutar refresh-conventions
+
+naming:
+  entities:
+    pattern: "PascalCase"
+    prefix: ""
+    examples: []
+  attributes:
+    pattern: "PascalCase"
+    examples: []
+  microflows:
+    pattern: "{Action}_{Entity}_{Qualifier}"
+    examples: []
+  pages:
+    pattern: "{Entity}_{Action}"
+    examples: []
+
+modules: []
+
+common_patterns:
+  access_rules:
+    roles: []
+    default_policy: "deny_all_then_grant"
+  validation:
+    common_types: ["required", "max_length"]
+    error_message_language: "es"
+  page_layouts:
+    default: "Atlas_Default"
+    popup: "PopupLayout"
+
+data_types:
+  most_used: ["String", "DateTime", "Decimal", "Integer", "Boolean"]
+  enumerations: []

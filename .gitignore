@@ -1,0 +1,79 @@
+# ============================================
+# MendixFormAgent - .gitignore
+# ============================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ---------- Node.js ----------
+node_modules/
+mendix_sdk/dist/
+mendix_sdk/*.js
+mendix_sdk/*.d.ts
+mendix_sdk/*.js.map
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Environment ----------
+.env
+.env.local
+.env.*.local
+
+# ---------- Mendix ----------
+# Proyecto de referencia COPEINCA (datos sensibles)
+reference_project/*.mpr
+reference_project/*.mpr.bak
+reference_project/**/*.mpr
+# Backups del .mpr NUNCA se commitean
+*.mpr.backup.*
+
+# ---------- Cache ----------
+# Cache LLM es local por developer
+cache/
+!cache/.gitkeep
+
+# ---------- Logs ----------
+# Logs por defecto no se commitean (ver README para activar tracking)
+logs/
+!logs/.gitkeep
+
+# ---------- Knowledge Base ----------
+# Vector store (se regenera localmente)
+knowledge_base/chroma_db/
+
+# ---------- Conventions ----------
+# El hash del .mpr no se commitea (es local)
+conventions/.mpr_hash
+
+# ---------- Testing ----------
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ---------- Claude ----------
+.claude/

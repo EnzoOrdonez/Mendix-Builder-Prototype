@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "COPEINCA Conventions",
+  "description": "Schema para el archivo copeinca_conventions.yaml — patrones extraídos del proyecto de referencia.",
+  "type": "object",
+  "required": ["project", "naming", "modules", "common_patterns", "data_types"],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["name", "mendix_version", "extracted_at", "mpr_hash"],
+      "properties": {
+        "name": { "type": "string" },
+        "mendix_version": { "type": "string" },
+        "extracted_at": { "type": "string", "format": "date-time" },
+        "mpr_hash": { "type": "string" }
+      }
+    },
+    "naming": {
+      "type": "object",
+      "required": ["entities", "attributes", "microflows", "pages"],
+      "properties": {
+        "entities": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "prefix": { "type": "string" },
+            "examples": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "examples": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "microflows": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "examples": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "pages": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "examples": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "entity_count": { "type": "integer" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "common_patterns": {
+      "type": "object",
+      "properties": {
+        "access_rules": {
+          "type": "object",
+          "properties": {
+            "roles": { "type": "array", "items": { "type": "string" } },
+            "default_policy": { "type": "string" }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "common_types": { "type": "array", "items": { "type": "string" } },
+            "error_message_language": { "type": "string" }
+          }
+        },
+        "page_layouts": {
+          "type": "object",
+          "properties": {
+            "default": { "type": "string" },
+            "popup": { "type": "string" }
+          }
+        }
+      }
+    },
+    "data_types": {
+      "type": "object",
+      "properties": {
+        "most_used": { "type": "array", "items": { "type": "string" } },
+        "enumerations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "values": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}
