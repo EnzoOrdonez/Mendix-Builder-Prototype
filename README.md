@@ -201,7 +201,28 @@ mendex serve --port 8000
 
 ```bash
 mendex cache stats
-mendex cache clear
+mendex cache clear --yes
+```
+
+### Log de decisiones
+
+```bash
+mendex log show --last 10
+mendex log show --output json
+mendex log tokens
+mendex log clear --yes
+```
+
+### Auditar con solo reglas deterministas (sin LLM)
+
+```bash
+mendex audit --mpr proyecto.mpr --no-bp
+```
+
+### Salida JSON para integracion CI/CD
+
+```bash
+mendex audit --mpr proyecto.mpr --output json --no-bp
 ```
 
 ---
@@ -303,19 +324,19 @@ mendex-agent-prototype/
 ## Roadmap
 
 - [x] **Fase 0**: Setup, scaffolding y configuracion base
-- [ ] **Fase 1**: Sistema de rollback / backup del .mpr
-- [ ] **Fase 2**: Logger estructurado y cache LLM
-- [ ] **Fase 3**: Extractor de convenciones COPEINCA
-- [ ] **Fase 4**: Pipeline RAG con BP oficiales
-- [ ] **Fase 5**: Motor de dry-run e idempotency checker
-- [ ] **Fase 6**: Parser Excel → IntermediateSchema
-- [ ] **Fase 7**: Extractor Figma → IntermediateSchema
-- [ ] **Fase 8**: Generador de Domain Model via Model SDK
-- [ ] **Fase 9**: Generador de paginas y microflows
-- [ ] **Fase 10**: Motor de auditoria de BP
-- [ ] **Fase 11**: Servidor REST FastAPI (MCP-compatible)
-- [ ] **Fase 12**: CLI completa con todos los flags
-- [ ] **Fase 13**: Tests de integracion + proyecto Mendix demo
+- [x] **Fase 1**: Sistema de rollback / backup del .mpr
+- [x] **Fase 2**: Logger estructurado y cache LLM
+- [x] **Fase 3**: Extractor de convenciones COPEINCA
+- [x] **Fase 4**: Pipeline RAG con BP oficiales
+- [x] **Fase 5**: Motor de dry-run e idempotency checker
+- [x] **Fase 6**: Parser Excel → IntermediateSchema
+- [x] **Fase 7**: Extractor Figma → IntermediateSchema
+- [x] **Fase 8**: Generador de Domain Model via Model SDK
+- [x] **Fase 9**: Generador de paginas y microflows
+- [x] **Fase 10**: Motor de auditoria de BP
+- [x] **Fase 11**: Servidor REST FastAPI (MCP-compatible)
+- [x] **Fase 12**: CLI completa con todos los flags
+- [x] **Fase 13**: Tests de integracion + proyecto Mendix demo
 
 ---
 
