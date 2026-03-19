@@ -363,12 +363,11 @@ class ExcelParser:
             if all(v is None for v in values):
                 continue
 
-            row_dict: dict[str, Any] = {}
+            row_dict: dict[str, Any] = {"_row_idx": row_idx}
             for i, h in enumerate(headers):
                 normalized = self._normalize_column_name(h)
                 if normalized and i < len(values):
                     row_dict[normalized] = values[i]
-                    row_dict[f"_row_idx"] = row_idx
 
             rows.append(row_dict)
 
