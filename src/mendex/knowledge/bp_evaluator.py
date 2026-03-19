@@ -165,6 +165,7 @@ class BPEvaluator:
         )
 
         # 3. Llamar a LLM
+        llm_response: LLMResponse | None = None
         try:
             llm_response = self._llm.send(
                 user_prompt,
@@ -199,9 +200,9 @@ class BPEvaluator:
                 warnings=[evaluation.recommendation] if evaluation.recommendation else [],
                 llm_model=self._llm.model_name(),
                 llm_tokens_used=(
-                    llm_response.total_tokens if "llm_response" in dir() else 0
+                    llm_response.total_tokens if llm_response is not None else 0
                 ),
-                cache_hit=llm_response.cache_hit if "llm_response" in dir() else False,
+                cache_hit=llm_response.cache_hit if llm_response is not None else False,
             )
 
         return evaluation

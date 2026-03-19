@@ -577,7 +577,9 @@ class DryRunEngine:
             parts.append("(non-persistable)")
 
         # Naming check
-        if entity.name[0].isupper() and "_" not in entity.name:
+        if not entity.name:
+            parts.append("with empty name")
+        elif entity.name[0].isupper() and "_" not in entity.name:
             parts.append("using PascalCase naming")
         elif "_" in entity.name:
             parts.append("using snake_case naming")
