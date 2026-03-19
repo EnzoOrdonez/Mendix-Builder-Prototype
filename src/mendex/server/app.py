@@ -71,6 +71,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         name="mendex-agent",
         description="MendixFormAgent — AI agent for Mendix form generation",
     )
-    mcp.mount()
+    # mount_http() is the new API (fastapi-mcp >= 0.4)
+    if hasattr(mcp, "mount_http"):
+        mcp.mount_http()
+    else:
+        mcp.mount()  # fallback for older versions
 
     return app

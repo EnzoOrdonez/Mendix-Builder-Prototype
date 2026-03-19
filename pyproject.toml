@@ -91,6 +91,11 @@ markers = [
     "e2e: end-to-end tests (require Mendix Model SDK)",
     "integration: integration tests",
 ]
+filterwarnings = [
+    "ignore::pydantic.warnings.PydanticDeprecatedSince211",
+    "ignore:mount\\(\\) is deprecated:DeprecationWarning",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
 
 # --- MyPy ---
 [tool.mypy]
