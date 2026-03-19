@@ -1,0 +1,139 @@
+{
+  "source": "excel",
+  "source_file": "fixtures/demo_crm.xlsx",
+  "entities": [
+    {
+      "name": "Customer",
+      "module": "CRM",
+      "attributes": [
+        {
+          "name": "FullName",
+          "mendix_type": "String",
+          "label": "Nombre Completo",
+          "required": true,
+          "validations": [
+            {
+              "type": "max_length",
+              "params": {"max": 200},
+              "error_message": "Máximo 200 caracteres"
+            }
+          ]
+        },
+        {
+          "name": "Email",
+          "mendix_type": "String",
+          "label": "Correo Electrónico",
+          "required": true,
+          "validations": [
+            {
+              "type": "regex",
+              "params": {"pattern": ".+@.+\\..+"},
+              "error_message": "Formato de email inválido"
+            }
+          ]
+        },
+        {
+          "name": "Phone",
+          "mendix_type": "String",
+          "label": "Teléfono"
+        },
+        {
+          "name": "IsActive",
+          "mendix_type": "Boolean",
+          "label": "Activo"
+        },
+        {
+          "name": "BirthDate",
+          "mendix_type": "DateTime",
+          "label": "Fecha de Nacimiento"
+        }
+      ],
+      "access_rules": [
+        {"role": "Admin", "can_create": true, "can_read": true, "can_write": true, "can_delete": true},
+        {"role": "User", "can_create": true, "can_read": true, "can_write": true, "can_delete": false}
+      ]
+    },
+    {
+      "name": "Order",
+      "module": "CRM",
+      "attributes": [
+        {
+          "name": "OrderNumber",
+          "mendix_type": "AutoNumber",
+          "label": "Número de Orden"
+        },
+        {
+          "name": "OrderDate",
+          "mendix_type": "DateTime",
+          "label": "Fecha",
+          "required": true
+        },
+        {
+          "name": "TotalAmount",
+          "mendix_type": "Decimal",
+          "label": "Monto Total",
+          "required": true
+        },
+        {
+          "name": "Description",
+          "mendix_type": "String",
+          "label": "Descripción",
+          "widget_type": "TextArea"
+        },
+        {
+          "name": "Status",
+          "mendix_type": "Enumeration",
+          "label": "Estado",
+          "enum_values": ["Draft", "Confirmed", "Shipped", "Delivered"]
+        }
+      ],
+      "access_rules": [
+        {"role": "Admin", "can_create": true, "can_read": true, "can_write": true, "can_delete": true}
+      ]
+    }
+  ],
+  "pages": [
+    {"name": "Customer_Create", "page_type": "Create", "entity": "Customer", "module": "CRM"},
+    {"name": "Customer_Edit", "page_type": "Edit", "entity": "Customer", "module": "CRM"},
+    {"name": "Customer_Overview", "page_type": "Overview", "entity": "Customer", "module": "CRM"},
+    {"name": "Order_Create", "page_type": "Create", "entity": "Order", "module": "CRM"},
+    {"name": "Order_Overview", "page_type": "Overview", "entity": "Order", "module": "CRM"}
+  ],
+  "microflows": [
+    {
+      "name": "VAL_Customer_Validate",
+      "microflow_type": "Validation",
+      "entity": "Customer",
+      "module": "CRM",
+      "logic_description": "Valida campos requeridos de Customer"
+    },
+    {
+      "name": "ACT_Customer_Save",
+      "microflow_type": "Save",
+      "entity": "Customer",
+      "module": "CRM",
+      "logic_description": "Valida y guarda Customer"
+    },
+    {
+      "name": "ACT_Customer_Delete",
+      "microflow_type": "Delete",
+      "entity": "Customer",
+      "module": "CRM",
+      "logic_description": "Confirma y elimina Customer"
+    },
+    {
+      "name": "VAL_Order_Validate",
+      "microflow_type": "Validation",
+      "entity": "Order",
+      "module": "CRM",
+      "logic_description": "Valida campos requeridos de Order"
+    },
+    {
+      "name": "ACT_Order_Save",
+      "microflow_type": "Save",
+      "entity": "Order",
+      "module": "CRM",
+      "logic_description": "Valida y guarda Order"
+    }
+  ]
+}
