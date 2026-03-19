@@ -276,10 +276,10 @@ class DomainModelGenerator:
             entity_result = self._create_single_entity(entity, mpr_path)
             result.entities.append(entity_result)
 
-            if entity_result.success:
-                result.total_created += 1
-            elif entity_result.error and "ya existe" in entity_result.error:
+            if entity_result.error and "ya existe" in entity_result.error:
                 result.total_skipped += 1
+            elif entity_result.success:
+                result.total_created += 1
             else:
                 result.total_failed += 1
 

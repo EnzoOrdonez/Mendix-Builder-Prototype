@@ -231,10 +231,16 @@ class TestExcelDataTypes:
         ("Largo", MendixDataType.LONG),
     ])
     def test_data_type_mapping(self, tmp_path: Path, raw_type: str, expected: MendixDataType):
-        rows = [
-            ["NombreCampo", "TipoDato"],
-            ["Campo1", raw_type],
-        ]
+        if expected == MendixDataType.ENUMERATION:
+            rows = [
+                ["NombreCampo", "TipoDato", "ValoresEnum"],
+                ["Campo1", raw_type, "A,B,C"],
+            ]
+        else:
+            rows = [
+                ["NombreCampo", "TipoDato"],
+                ["Campo1", raw_type],
+            ]
         xlsx = _create_xlsx(tmp_path, {"Test": rows})
         parser = ExcelParser()
         schema = parser.parse(xlsx)

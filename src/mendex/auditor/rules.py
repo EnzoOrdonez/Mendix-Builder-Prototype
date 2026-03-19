@@ -218,7 +218,7 @@ class EntityAttributeCountRule(AuditRule):
                     "a 1-1 association for less-used attributes"
                 ),
             )
-        if count > self.WARN_THRESHOLD:
+        if self.WARN_THRESHOLD <= count < self.MAX_ATTRIBUTES:
             return AuditFinding(
                 rule_id=self.rule_id,
                 severity=FindingSeverity.INFO,
