@@ -1,0 +1,161 @@
+{
+  "name": "form_OrdenCompra",
+  "type": "FRAME",
+  "children": [
+    {
+      "name": "group_DatosGenerales",
+      "type": "FRAME",
+      "children": [
+        {
+          "name": "label_Numero",
+          "type": "FRAME",
+          "children": [
+            {
+              "type": "TEXT",
+              "name": "text",
+              "characters": "Número de Orden"
+            }
+          ]
+        },
+        {
+          "name": "input_Numero_number",
+          "type": "INSTANCE",
+          "children": []
+        },
+        {
+          "name": "required_Numero",
+          "type": "TEXT",
+          "characters": "*"
+        },
+        {
+          "name": "label_FechaCreacion",
+          "type": "FRAME",
+          "children": [
+            {
+              "type": "TEXT",
+              "name": "text",
+              "characters": "Fecha de Creación"
+            }
+          ]
+        },
+        {
+          "name": "input_FechaCreacion_date",
+          "type": "INSTANCE",
+          "children": []
+        },
+        {
+          "name": "required_FechaCreacion",
+          "type": "TEXT",
+          "characters": "*"
+        }
+      ]
+    },
+    {
+      "name": "group_Montos",
+      "type": "FRAME",
+      "children": [
+        {
+          "name": "label_MontoTotal",
+          "type": "TEXT",
+          "characters": "Monto Total"
+        },
+        {
+          "name": "input_MontoTotal_decimal",
+          "type": "INSTANCE",
+          "children": []
+        },
+        {
+          "name": "required_MontoTotal",
+          "type": "TEXT",
+          "characters": "*"
+        }
+      ]
+    },
+    {
+      "name": "label_Descripcion",
+      "type": "TEXT",
+      "characters": "Descripción"
+    },
+    {
+      "name": "input_Descripcion_textarea",
+      "type": "INSTANCE",
+      "children": []
+    },
+    {
+      "name": "label_Estado",
+      "type": "TEXT",
+      "characters": "Estado"
+    },
+    {
+      "name": "input_Estado_enum",
+      "type": "INSTANCE",
+      "children": []
+    },
+    {
+      "name": "label_Activo",
+      "type": "TEXT",
+      "characters": "Activo"
+    },
+    {
+      "name": "input_Activo_bool",
+      "type": "INSTANCE",
+      "children": []
+    },
+    {
+      "name": "form_LineaDetalle",
+      "type": "FRAME",
+      "children": [
+        {
+          "name": "label_Producto",
+          "type": "TEXT",
+          "characters": "Producto"
+        },
+        {
+          "name": "input_Producto_text",
+          "type": "INSTANCE",
+          "children": []
+        },
+        {
+          "name": "required_Producto",
+          "type": "TEXT",
+          "characters": "*"
+        },
+        {
+          "name": "label_Cantidad",
+          "type": "TEXT",
+          "characters": "Cantidad"
+        },
+        {
+          "name": "input_Cantidad_number",
+          "type": "INSTANCE",
+          "children": []
+        },
+        {
+          "name": "label_PrecioUnitario",
+          "type": "TEXT",
+          "characters": "Precio Unitario"
+        },
+        {
+          "name": "input_PrecioUnitario_decimal",
+          "type": "INSTANCE",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "btn_Submit",
+      "type": "INSTANCE",
+      "children": []
+    },
+    {
+      "name": "btn_Cancel",
+      "type": "INSTANCE",
+      "children": []
+    },
+    {
+      "name": "btn_Delete",
+      "type": "INSTANCE",
+      "children": []
+    }
+  ]
+}
