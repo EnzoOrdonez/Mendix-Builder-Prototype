@@ -6,7 +6,8 @@
  *
  * Phase 0: Stub with echo handler.
  * Phase 3: Added readProjectStructure and checkArtifactExists.
- * Phases 8-9: Will add createEntity, createPage, createMicroflow.
+ * Phase 8: Added createEntity.
+ * Phase 9: Will add createPage, createMicroflow.
  */
 
 import * as readline from "readline";
@@ -14,6 +15,8 @@ import {
   readProjectStructure,
   checkArtifactExists,
 } from "./handlers/reader";
+import { createEntity } from "./handlers/entity";
+import type { Entity } from "./types/schemas";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -49,7 +52,7 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 
   switch (req.method) {
     case "ping":
-      return createResponse(req.id, { status: "ok", version: "0.3.0" });
+      return createResponse(req.id, { status: "ok", version: "0.8.0" });
 
     case "echo":
       return createResponse(req.id, params);
@@ -91,6 +94,25 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
       }
     }
 
+    case "createEntity": {
+      const mprPath3 = params.mprPath as string;
+      const entityData = params.entity as Entity;
+      if (!mprPath3 || !entityData) {
+        return createError(
+          req.id,
+          -32602,
+          "Missing required params: mprPath, entity"
+        );
+      }
+      try {
+        const result = await createEntity(mprPath3, entityData);
+        return createResponse(req.id, result);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return createError(req.id, -32000, `createEntity failed: ${msg}`);
+      }
+    }
+
     default:
       return createError(req.id, -32601, `Method not found: ${req.method}`);
   }
@@ -114,4 +136,4 @@ rl.on("line", async (line: string) => {
   }
 });
 
-process.stderr.write("[mendex-sdk-bridge] Ready (v0.3.0)\n");
+process.stderr.write("[mendex-sdk-bridge] Ready (v0.8.0)\n");

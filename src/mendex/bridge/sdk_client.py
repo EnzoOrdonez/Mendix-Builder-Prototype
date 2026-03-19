@@ -10,7 +10,8 @@ Implementaciones:
 - (Futuro) AgentsKitClient: Para Mendix 11 via Agents Kit API
 
 Fase 3: Implementación del bridge con read_project_structure.
-         Fases 8-9 agregan create_entity, create_page, create_microflow.
+Fase 8: Agregar create_entity.
+Fase 9: Agregar create_page, create_microflow.
 """
 
 from __future__ import annotations
@@ -88,45 +89,76 @@ class SDKClientError(Exception):
 class SDKClient(ABC):
     """Interfaz abstracta para operaciones del Mendix Model SDK.
 
-    Fase 3: Solo read_project_structure.
-    Fases 8-9: Se agregan create_entity, create_page, create_microflow.
+    Fase 3: read_project_structure, check_artifact_exists, ping.
+    Fase 8: create_entity.
+    Fase 9: create_page, create_microflow.
     """
 
     @abstractmethod
     def read_project_structure(self, mpr_path: Path) -> ProjectStructure:
-        """Lee la estructura completa de un proyecto .mpr.
-
-        Args:
-            mpr_path: Path al archivo .mpr.
-
-        Returns:
-            ProjectStructure con módulos, entidades, páginas, microflows, roles.
-        """
+        """Lee la estructura completa de un proyecto .mpr."""
         ...
 
     @abstractmethod
     def check_artifact_exists(
         self, mpr_path: Path, artifact_type: str, module: str, name: str
     ) -> bool:
-        """Verifica si un artefacto ya existe en el .mpr.
-
-        Args:
-            mpr_path: Path al .mpr.
-            artifact_type: "entity" | "page" | "microflow".
-            module: Nombre del módulo.
-            name: Nombre del artefacto.
-
-        Returns:
-            True si existe, False si no.
-        """
+        """Verifica si un artefacto ya existe en el .mpr."""
         ...
 
     @abstractmethod
     def ping(self) -> bool:
-        """Verifica que el bridge esté operativo.
+        """Verifica que el bridge esté operativo."""
+        ...
+
+    @abstractmethod
+    def create_entity(
+        self,
+        mpr_path: Path,
+        entity_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Crea una entidad con atributos y reglas de acceso en el .mpr.
+
+        Args:
+            mpr_path: Path al .mpr.
+            entity_data: Dict con name, module, attributes, access_rules, is_persistable.
 
         Returns:
-            True si el bridge responde correctamente.
+            Dict con status y detalles de la entidad creada.
+        """
+        ...
+
+    @abstractmethod
+    def create_page(
+        self,
+        mpr_path: Path,
+        page_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Crea una página en el .mpr.
+
+        Args:
+            mpr_path: Path al .mpr.
+            page_data: Dict con name, page_type, entity, module, title, layout.
+
+        Returns:
+            Dict con status y detalles de la página creada.
+        """
+        ...
+
+    @abstractmethod
+    def create_microflow(
+        self,
+        mpr_path: Path,
+        microflow_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Crea un microflow en el .mpr.
+
+        Args:
+            mpr_path: Path al .mpr.
+            microflow_data: Dict con name, microflow_type, entity, module, logic_description.
+
+        Returns:
+            Dict con status y detalles del microflow creado.
         """
         ...
 
@@ -240,6 +272,33 @@ class SubprocessSDKClient(SDKClient):
         )
         return bool(result.get("exists", False))
 
+    def create_entity(
+        self, mpr_path: Path, entity_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        result = self._send_request(
+            "createEntity",
+            {"mprPath": str(mpr_path.resolve()), "entity": entity_data},
+        )
+        return result or {}
+
+    def create_page(
+        self, mpr_path: Path, page_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        result = self._send_request(
+            "createPage",
+            {"mprPath": str(mpr_path.resolve()), "page": page_data},
+        )
+        return result or {}
+
+    def create_microflow(
+        self, mpr_path: Path, microflow_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        result = self._send_request(
+            "createMicroflow",
+            {"mprPath": str(mpr_path.resolve()), "microflow": microflow_data},
+        )
+        return result or {}
+
     def close(self) -> None:
         """Cierra el proceso Node.js."""
         if self._process is not None and self._process.poll() is None:
@@ -280,7 +339,10 @@ class SubprocessSDKClient(SDKClient):
 
 
 class MockSDKClient(SDKClient):
-    """Cliente SDK mock para tests. Retorna estructuras predefinidas."""
+    """Cliente SDK mock para tests. Retorna estructuras predefinidas.
+
+    Registra todas las operaciones de creación para verificación en tests.
+    """
 
     def __init__(
         self,
@@ -289,6 +351,9 @@ class MockSDKClient(SDKClient):
     ) -> None:
         self._structure = project_structure or ProjectStructure()
         self._existing = existing_artifacts or set()
+        self.created_entities: list[dict[str, Any]] = []
+        self.created_pages: list[dict[str, Any]] = []
+        self.created_microflows: list[dict[str, Any]] = []
 
     def ping(self) -> bool:
         return True
@@ -301,3 +366,36 @@ class MockSDKClient(SDKClient):
     ) -> bool:
         key = f"{artifact_type}:{module}.{name}"
         return key in self._existing
+
+    def create_entity(
+        self, mpr_path: Path, entity_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.created_entities.append(entity_data)
+        name = entity_data.get("name", "unknown")
+        module = entity_data.get("module", "unknown")
+        # Register as existing after creation
+        self._existing.add(f"entity:{module}.{name}")
+        return {
+            "status": "created",
+            "name": name,
+            "module": module,
+            "attributes_count": len(entity_data.get("attributes", [])),
+        }
+
+    def create_page(
+        self, mpr_path: Path, page_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.created_pages.append(page_data)
+        name = page_data.get("name", "unknown")
+        module = page_data.get("module", "unknown")
+        self._existing.add(f"page:{module}.{name}")
+        return {"status": "created", "name": name, "module": module}
+
+    def create_microflow(
+        self, mpr_path: Path, microflow_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.created_microflows.append(microflow_data)
+        name = microflow_data.get("name", "unknown")
+        module = microflow_data.get("module", "unknown")
+        self._existing.add(f"microflow:{module}.{name}")
+        return {"status": "created", "name": name, "module": module}
