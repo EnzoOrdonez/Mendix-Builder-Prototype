@@ -4,10 +4,16 @@
  * This process is spawned by the Python agent and communicates via
  * stdin/stdout using JSON-RPC 2.0 protocol.
  *
- * Phase 0: Stub with echo handler. Full implementation in Phases 3, 8, 9.
+ * Phase 0: Stub with echo handler.
+ * Phase 3: Added readProjectStructure and checkArtifactExists.
+ * Phases 8-9: Will add createEntity, createPage, createMicroflow.
  */
 
 import * as readline from "readline";
+import {
+  readProjectStructure,
+  checkArtifactExists,
+} from "./handlers/reader";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -39,12 +45,51 @@ function createError(
 }
 
 async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
+  const params = req.params || {};
+
   switch (req.method) {
     case "ping":
-      return createResponse(req.id, { status: "ok", version: "0.1.0" });
+      return createResponse(req.id, { status: "ok", version: "0.3.0" });
 
     case "echo":
-      return createResponse(req.id, req.params);
+      return createResponse(req.id, params);
+
+    case "readProjectStructure": {
+      const mprPath = params.mprPath as string;
+      if (!mprPath) {
+        return createError(req.id, -32602, "Missing required param: mprPath");
+      }
+      try {
+        const result = await readProjectStructure(mprPath);
+        return createResponse(req.id, result);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return createError(req.id, -32000, `readProjectStructure failed: ${msg}`);
+      }
+    }
+
+    case "checkArtifactExists": {
+      const mprPath2 = params.mprPath as string;
+      const artifactType = params.artifactType as string;
+      const moduleName = params.module as string;
+      const name = params.name as string;
+      if (!mprPath2 || !artifactType || !moduleName || !name) {
+        return createError(
+          req.id,
+          -32602,
+          "Missing required params: mprPath, artifactType, module, name"
+        );
+      }
+      try {
+        const result = await checkArtifactExists(
+          mprPath2, artifactType, moduleName, name
+        );
+        return createResponse(req.id, result);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return createError(req.id, -32000, `checkArtifactExists failed: ${msg}`);
+      }
+    }
 
     default:
       return createError(req.id, -32601, `Method not found: ${req.method}`);
@@ -69,4 +114,4 @@ rl.on("line", async (line: string) => {
   }
 });
 
-process.stderr.write("[mendex-sdk-bridge] Ready\n");
+process.stderr.write("[mendex-sdk-bridge] Ready (v0.3.0)\n");

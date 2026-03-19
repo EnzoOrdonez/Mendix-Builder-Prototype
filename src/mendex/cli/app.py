@@ -68,11 +68,47 @@ def refresh_conventions(
     mpr: Annotated[
         Path, typer.Option("--mpr", "-m", help="Path al .mpr del proyecto de referencia")
     ],
+    project_name: Annotated[
+        str, typer.Option("--project-name", help="Nombre del proyecto de referencia")
+    ] = "COPEINCA",
+    mendix_version: Annotated[
+        str, typer.Option("--mendix-version", help="Versión de Mendix del proyecto")
+    ] = "10.24.16",
 ) -> None:
     """Re-extrae convenciones del proyecto de referencia."""
-    typer.echo(f"[mendex] refresh-conventions: mpr={mpr}")
-    typer.echo("[mendex] TODO: Implementar en fase 3")
-    raise typer.Exit(0)
+    from mendex.bridge.sdk_client import SubprocessSDKClient
+    from mendex.config.settings import get_settings
+    from mendex.knowledge.conventions_extractor import ConventionsExtractor
+    from mendex.logging.decision_logger import DecisionLogger
+
+    settings = get_settings()
+
+    if not mpr.exists():
+        typer.echo(f"[mendex] ERROR: El archivo .mpr no existe: {mpr}", err=True)
+        raise typer.Exit(1)
+
+    # Inicializar componentes
+    decision_logger = DecisionLogger(settings.decisions_log_path)
+    sdk_client = SubprocessSDKClient(
+        node_script=Path("mendix_sdk/dist/index.js")
+    )
+
+    extractor = ConventionsExtractor(
+        sdk_client=sdk_client,
+        output_path=settings.conventions_path,
+        hash_path=settings.conventions_path.parent / ".mpr_hash",
+        decision_logger=decision_logger,
+        project_name=project_name,
+    )
+
+    try:
+        result = extractor.extract(mpr, mendix_version=mendix_version)
+        typer.echo(result.summary())
+    except Exception as e:
+        typer.echo(f"[mendex] ERROR: {e}", err=True)
+        raise typer.Exit(1)
+    finally:
+        sdk_client.close()
 
 
 @app.command()
