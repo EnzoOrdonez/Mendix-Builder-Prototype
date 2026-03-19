@@ -7,7 +7,7 @@
  * Phase 0: Stub with echo handler.
  * Phase 3: Added readProjectStructure and checkArtifactExists.
  * Phase 8: Added createEntity.
- * Phase 9: Will add createPage, createMicroflow.
+ * Phase 9: Added createPage, createMicroflow.
  */
 
 import * as readline from "readline";
@@ -16,6 +16,8 @@ import {
   checkArtifactExists,
 } from "./handlers/reader";
 import { createEntity } from "./handlers/entity";
+import { createPage, type CreatePageParams } from "./handlers/page";
+import { createMicroflow, type CreateMicroflowParams } from "./handlers/microflow";
 import type { Entity } from "./types/schemas";
 
 interface JsonRpcRequest {
@@ -52,7 +54,7 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 
   switch (req.method) {
     case "ping":
-      return createResponse(req.id, { status: "ok", version: "0.8.0" });
+      return createResponse(req.id, { status: "ok", version: "0.9.0" });
 
     case "echo":
       return createResponse(req.id, params);
@@ -113,6 +115,44 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
       }
     }
 
+    case "createPage": {
+      const mprPath4 = params.mprPath as string;
+      const pageData = params.page as CreatePageParams;
+      if (!mprPath4 || !pageData) {
+        return createError(
+          req.id,
+          -32602,
+          "Missing required params: mprPath, page"
+        );
+      }
+      try {
+        const result = await createPage(mprPath4, pageData);
+        return createResponse(req.id, result);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return createError(req.id, -32000, `createPage failed: ${msg}`);
+      }
+    }
+
+    case "createMicroflow": {
+      const mprPath5 = params.mprPath as string;
+      const mfData = params.microflow as CreateMicroflowParams;
+      if (!mprPath5 || !mfData) {
+        return createError(
+          req.id,
+          -32602,
+          "Missing required params: mprPath, microflow"
+        );
+      }
+      try {
+        const result = await createMicroflow(mprPath5, mfData);
+        return createResponse(req.id, result);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return createError(req.id, -32000, `createMicroflow failed: ${msg}`);
+      }
+    }
+
     default:
       return createError(req.id, -32601, `Method not found: ${req.method}`);
   }
@@ -136,4 +176,4 @@ rl.on("line", async (line: string) => {
   }
 });
 
-process.stderr.write("[mendex-sdk-bridge] Ready (v0.8.0)\n");
+process.stderr.write("[mendex-sdk-bridge] Ready (v0.9.0)\n");

@@ -114,11 +114,22 @@ def refresh_conventions(
 @app.command()
 def serve(
     port: Annotated[int, typer.Option("--port", "-p", help="Puerto del servidor")] = 8000,
+    host: Annotated[str, typer.Option("--host", help="Host del servidor")] = "127.0.0.1",
 ) -> None:
     """Inicia el servidor REST FastAPI (MCP-compatible)."""
-    typer.echo(f"[mendex] serve: port={port}")
-    typer.echo("[mendex] TODO: Implementar en fase 11")
-    raise typer.Exit(0)
+    import uvicorn
+
+    from mendex.config.settings import get_settings
+    from mendex.server.app import create_app
+
+    settings = get_settings()
+    settings.host = host
+    settings.port = port
+
+    fastapi_app = create_app(settings)
+    typer.echo(f"[mendex] Servidor iniciando en http://{host}:{port}")
+    typer.echo("[mendex] Docs: http://{host}:{port}/docs")
+    uvicorn.run(fastapi_app, host=host, port=port, log_level="info")
 
 
 # --- Sub-comandos de cache ---
