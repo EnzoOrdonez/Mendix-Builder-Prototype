@@ -4,13 +4,13 @@
   "description": "Node.js bridge for Mendix Model SDK - JSON-RPC stdio server",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
-    "lint": "eslint src/"
+    "dev": "npx ts-node src/index.ts",
+    "lint": "npx eslint src/"
   },
   "dependencies": {
-    "mendixmodelsdk": "^5.0.0",
+    "mendixmodelsdk": "^4.100.0",
     "mendixplatformsdk": "^5.0.0"
   },
   "devDependencies": {

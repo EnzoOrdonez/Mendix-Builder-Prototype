@@ -129,10 +129,34 @@ cp .env.example .env
 # Editar .env con tus API keys
 ```
 
-### 4. Verificar instalacion
+### 4. Configurar ExecutionPolicy (Windows)
+
+En PowerShell (solo si no se ha hecho antes):
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### 5. Verificar instalacion
 
 ```bash
 python -m mendex --help
+node mendix_sdk/dist/index.js --ping
+```
+
+### 6. Agregar proyecto Mendix de referencia (opcional)
+
+Copiar **solo el archivo `.mpr`** (no la carpeta completa) a `reference_project/`:
+
+```bash
+# El archivo .mpr esta en .gitignore, nunca se sube a GitHub
+cp /ruta/a/tu/Proyecto.mpr reference_project/
+```
+
+Luego extraer convenciones:
+
+```bash
+python -m mendex refresh-conventions --mpr reference_project/Proyecto.mpr
 ```
 
 ---
