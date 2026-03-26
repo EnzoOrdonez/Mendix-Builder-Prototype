@@ -23,6 +23,7 @@ from mendex.bridge.sdk_client import SDKClient, SDKClientError
 from mendex.logging.decision_logger import DecisionLogger
 from mendex.schema.intermediate import (
     AccessRuleSchema,
+    AssociationSchema,
     AttributeSchema,
     EntitySchema,
     IntermediateSchema,
@@ -52,19 +53,37 @@ class EntityResult:
 
 
 @dataclass
+class AssociationResult:
+    """Resultado de la creación de una asociación."""
+
+    name: str
+    parent_entity: str
+    child_entity: str
+    success: bool
+    error: str | None = None
+
+    def __repr__(self) -> str:
+        status = "✓" if self.success else "✗"
+        return f"AssociationResult({status} {self.name}: {self.parent_entity}→{self.child_entity})"
+
+
+@dataclass
 class GenerationResult:
     """Resultado completo de la generación del domain model."""
 
     entities: list[EntityResult] = field(default_factory=list)
+    associations: list[AssociationResult] = field(default_factory=list)
     total_created: int = 0
     total_skipped: int = 0
     total_failed: int = 0
+    associations_created: int = 0
+    associations_failed: int = 0
     errors: list[str] = field(default_factory=list)
     rollback_triggered: bool = False
 
     @property
     def success(self) -> bool:
-        return self.total_failed == 0 and not self.rollback_triggered
+        return self.total_failed == 0 and self.associations_failed == 0 and not self.rollback_triggered
 
     def summary(self) -> str:
         lines = [
@@ -73,6 +92,11 @@ class GenerationResult:
             f"{self.total_skipped} skipped, "
             f"{self.total_failed} failed",
         ]
+        if self.associations_created or self.associations_failed:
+            lines.append(
+                f"Associations: {self.associations_created} created, "
+                f"{self.associations_failed} failed"
+            )
         if self.rollback_triggered:
             lines.append("⚠ Rollback triggered — .mpr restored to previous state")
         for err in self.errors:
@@ -131,7 +155,7 @@ class DomainModelGenerator:
         *,
         input_hash: str = "",
     ) -> GenerationResult:
-        """Genera todas las entidades del schema en el .mpr.
+        """Genera todas las entidades y asociaciones del schema en el .mpr.
 
         Args:
             schema: IntermediateSchema con las entidades a crear.
@@ -143,6 +167,7 @@ class DomainModelGenerator:
         """
         return self._execute_generation(
             entities=schema.entities,
+            associations=schema.associations,
             mpr_path=mpr_path,
             input_hash=input_hash,
         )
@@ -210,6 +235,7 @@ class DomainModelGenerator:
         entities: list[EntitySchema],
         mpr_path: Path,
         input_hash: str,
+        associations: list[AssociationSchema] | None = None,
     ) -> GenerationResult:
         """Ejecuta la generación con rollback atómico."""
         result = GenerationResult()
@@ -221,14 +247,19 @@ class DomainModelGenerator:
         logger.info(
             "domain_model_generation_started",
             entities=len(entities),
+            associations=len(associations) if associations else 0,
             mpr_path=str(mpr_path),
         )
+
+        entity_map = {e.name: e for e in entities}
 
         # Si hay rollback manager, usar operación atómica
         if self._rollback:
             try:
                 with atomic_mpr_operation(self._rollback, mpr_path):
                     self._create_entities(entities, mpr_path, result)
+                    if associations:
+                        self._create_associations(associations, mpr_path, result, entity_map)
             except Exception as e:
                 result.rollback_triggered = True
                 result.errors.append(f"Rollback triggered: {e}")
@@ -239,6 +270,8 @@ class DomainModelGenerator:
                 )
         else:
             self._create_entities(entities, mpr_path, result)
+            if associations:
+                self._create_associations(associations, mpr_path, result, entity_map)
 
         # Log
         if self._decision_logger:
@@ -251,6 +284,8 @@ class DomainModelGenerator:
                     "total_created": result.total_created,
                     "total_skipped": result.total_skipped,
                     "total_failed": result.total_failed,
+                    "associations_created": result.associations_created,
+                    "associations_failed": result.associations_failed,
                     "rollback": result.rollback_triggered,
                 },
             )
@@ -260,6 +295,7 @@ class DomainModelGenerator:
             created=result.total_created,
             skipped=result.total_skipped,
             failed=result.total_failed,
+            associations_created=result.associations_created,
             rollback=result.rollback_triggered,
         )
 
@@ -348,7 +384,7 @@ class DomainModelGenerator:
     @staticmethod
     def _build_entity_data(entity: EntitySchema) -> dict[str, Any]:
         """Convierte EntitySchema a dict para el SDK Bridge."""
-        return {
+        data: dict[str, Any] = {
             "name": entity.name,
             "module": entity.module,
             "is_persistable": entity.is_persistable,
@@ -361,6 +397,13 @@ class DomainModelGenerator:
                 for rule in entity.access_rules
             ],
         }
+        if entity.generalization:
+            data["generalization"] = entity.generalization
+        if entity.is_lookup:
+            data["is_lookup"] = True
+        if entity.seed_values:
+            data["seed_values"] = entity.seed_values
+        return data
 
     @staticmethod
     def _build_attribute_data(attr: AttributeSchema) -> dict[str, Any]:
@@ -400,3 +443,66 @@ class DomainModelGenerator:
             "can_write": rule.can_write,
             "can_delete": rule.can_delete,
         }
+
+    def _create_associations(
+        self,
+        associations: list[AssociationSchema],
+        mpr_path: Path,
+        result: GenerationResult,
+        entity_map: dict[str, EntitySchema] | None = None,
+    ) -> None:
+        """Crea las asociaciones entre entidades via SDK Bridge."""
+        for assoc in associations:
+            assoc_data = self._build_association_data(assoc, entity_map)
+            try:
+                self._sdk.create_association(mpr_path, assoc_data)
+                result.associations.append(AssociationResult(
+                    name=assoc.name,
+                    parent_entity=assoc.parent_entity,
+                    child_entity=assoc.child_entity,
+                    success=True,
+                ))
+                result.associations_created += 1
+                logger.info(
+                    "association_created",
+                    name=assoc.name,
+                    parent=assoc.parent_entity,
+                    child=assoc.child_entity,
+                    type=assoc.association_type.value,
+                )
+            except SDKClientError as e:
+                result.associations.append(AssociationResult(
+                    name=assoc.name,
+                    parent_entity=assoc.parent_entity,
+                    child_entity=assoc.child_entity,
+                    success=False,
+                    error=str(e),
+                ))
+                result.associations_failed += 1
+                result.errors.append(
+                    f"Association '{assoc.name}' failed: {e}"
+                )
+
+    def _build_association_data(
+        self,
+        assoc: AssociationSchema,
+        entity_map: dict[str, EntitySchema] | None = None,
+    ) -> dict[str, Any]:
+        """Convierte AssociationSchema a dict para el SDK Bridge."""
+        # Resolve module from parent entity
+        module = ""
+        if entity_map and assoc.parent_entity in entity_map:
+            module = entity_map[assoc.parent_entity].module
+
+        data: dict[str, Any] = {
+            "name": assoc.name,
+            "parent_entity": assoc.parent_entity,
+            "child_entity": assoc.child_entity,
+            "association_type": assoc.association_type.value,
+            "module": module,
+            "owner": assoc.owner,
+            "cascade_delete": assoc.cascade_delete,
+        }
+        if assoc.is_lookup:
+            data["is_lookup"] = True
+        return data

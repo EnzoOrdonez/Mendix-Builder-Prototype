@@ -59,6 +59,8 @@ def generate(
     module: Annotated[str, typer.Option("--module", help="Módulo destino en Mendix")] = "Operaciones",
 ) -> None:
     """Genera formularios Mendix desde Excel o Figma."""
+    from mendex.bridge.composite_client import CompositeSDKClient
+    from mendex.bridge.mpr_reader import MprDirectReader
     from mendex.bridge.rollback import RollbackManager, atomic_mpr_operation
     from mendex.bridge.sdk_client import SubprocessSDKClient
     from mendex.config.settings import get_settings
@@ -79,9 +81,18 @@ def generate(
     # Parse input
     schema = _parse_input(input, module, settings)
 
-    # Init components
+    console.print(
+        f"  Schema: {len(schema.entities)} entidades, "
+        f"{len(schema.pages)} paginas, "
+        f"{len(schema.microflows)} microflows, "
+        f"{len(schema.associations)} asociaciones"
+    )
+
+    # Init components — MprDirectReader for reads, SubprocessSDKClient for writes
     decision_logger = DecisionLogger(settings.decisions_log_path)
-    sdk_client = SubprocessSDKClient(node_script=Path("mendix_sdk/dist/index.js"))
+    reader = MprDirectReader()
+    writer = SubprocessSDKClient(node_script=Path("mendix_sdk/dist/index.js"))
+    sdk_client = CompositeSDKClient(reader=reader, writer=writer)
 
     try:
         # 1. Dry-run
@@ -163,15 +174,31 @@ def generate(
                     f"{mf_result.total_failed} fallidos"
                 )
 
+        # Post-generation validation
+        from mendex.validators.post_generation import PostGenerationValidator
+
+        val_report = PostGenerationValidator().validate(schema)
+        if val_report.warnings:
+            console.print(f"\n[yellow]Validación: {val_report.warning_count} warnings[/yellow]")
+            for issue in val_report.warnings:
+                console.print(f"  [yellow]{issue}[/yellow]")
+        if val_report.errors:
+            console.print(f"\n[red]Validación: {val_report.error_count} errores[/red]")
+            for issue in val_report.errors:
+                console.print(f"  [red]{issue}[/red]")
+
         console.print("\n[green]Generación completada.[/green]")
 
     except Exception as e:
         if not isinstance(e, (typer.Exit, SystemExit)):
+            import traceback
+
             err_console.print(f"[red]ERROR:[/red] {e}")
+            err_console.print(f"[dim]{traceback.format_exc()}[/dim]")
             raise typer.Exit(1)
         raise
     finally:
-        sdk_client.close()
+        sdk_client.close()  # type: ignore[union-attr]
 
 
 def _parse_input(input_path: str, module: str, settings: "Any") -> "Any":
@@ -222,7 +249,7 @@ def audit(
 ) -> None:
     """Audita un proyecto Mendix contra buenas prácticas oficiales."""
     from mendex.auditor.engine import AuditEngine, AuditStatus
-    from mendex.bridge.sdk_client import SubprocessSDKClient
+    from mendex.bridge.mpr_reader import MprDirectReader
     from mendex.config.settings import get_settings
     from mendex.logging.decision_logger import DecisionLogger
 
@@ -233,7 +260,7 @@ def audit(
         raise typer.Exit(1)
 
     decision_logger = DecisionLogger(settings.decisions_log_path)
-    sdk_client = SubprocessSDKClient(node_script=Path("mendix_sdk/dist/index.js"))
+    sdk_client = MprDirectReader()  # Read-only, no Node.js needed
 
     try:
         engine = AuditEngine(
@@ -255,8 +282,6 @@ def audit(
     except Exception as e:
         err_console.print(f"[red]ERROR:[/red] {e}")
         raise typer.Exit(1)
-    finally:
-        sdk_client.close()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -277,7 +302,7 @@ def refresh_conventions(
     ] = "10.24.16",
 ) -> None:
     """Re-extrae convenciones del proyecto de referencia."""
-    from mendex.bridge.sdk_client import SubprocessSDKClient
+    from mendex.bridge.mpr_reader import MprDirectReader
     from mendex.config.settings import get_settings
     from mendex.knowledge.conventions_extractor import ConventionsExtractor
     from mendex.logging.decision_logger import DecisionLogger
@@ -289,9 +314,7 @@ def refresh_conventions(
         raise typer.Exit(1)
 
     decision_logger = DecisionLogger(settings.decisions_log_path)
-    sdk_client = SubprocessSDKClient(
-        node_script=Path("mendix_sdk/dist/index.js")
-    )
+    sdk_client = MprDirectReader()  # Read-only, no Node.js needed
 
     extractor = ConventionsExtractor(
         sdk_client=sdk_client,
@@ -307,8 +330,129 @@ def refresh_conventions(
     except Exception as e:
         err_console.print(f"[red]ERROR:[/red] {e}")
         raise typer.Exit(1)
-    finally:
-        sdk_client.close()
+
+
+# ═══════════════════════════════════════════════════════════════
+# init-excel
+# ═══════════════════════════════════════════════════════════════
+
+
+@app.command(name="init-excel")
+def init_excel(
+    output: Annotated[str, typer.Option("--output", "-o", help="Path de salida .xlsx")] = "plantilla.xlsx",
+    module: Annotated[str, typer.Option("--module", "-m", help="Módulo destino")] = "Operaciones",
+    entities: Annotated[int, typer.Option("--entities", "-e", help="Número de hojas de entidad")] = 1,
+    no_examples: Annotated[bool, typer.Option("--no-examples", help="No incluir filas de ejemplo")] = False,
+) -> None:
+    """Genera una plantilla Excel pre-formateada para definir entidades."""
+    from mendex.templates.excel_template import ExcelTemplateGenerator
+
+    gen = ExcelTemplateGenerator()
+    result = gen.generate(
+        Path(output),
+        module=module,
+        entity_count=entities,
+        include_examples=not no_examples,
+    )
+    console.print(f"[green]Plantilla generada:[/green] {result}")
+    console.print(f"  Módulo: {module}")
+    console.print(f"  Hojas entidad: {entities}")
+    console.print(f"  Hojas extra: _Relaciones, _Seguridad")
+
+
+# ═══════════════════════════════════════════════════════════════
+# validate
+# ═══════════════════════════════════════════════════════════════
+
+
+@app.command()
+def validate(
+    input: Annotated[str, typer.Option("--input", "-i", help="Path al .xlsx")],
+    module: Annotated[str, typer.Option("--module", help="Módulo destino")] = "Operaciones",
+    conventions: Annotated[bool, typer.Option("--conventions", help="También validar naming conventions")] = False,
+    output: Annotated[
+        OutputFormat, typer.Option("--output", "-o", help="Formato de salida")
+    ] = OutputFormat.TEXT,
+) -> None:
+    """Valida un schema sin generar artefactos (cross-references, huérfanos, convenciones)."""
+    from mendex.validators.post_generation import PostGenerationValidator
+
+    schema = _parse_input(input, module, None)
+
+    # Post-generation validation
+    validator = PostGenerationValidator()
+    report = validator.validate(schema)
+
+    if conventions:
+        from mendex.validators.conventions import ConventionsValidator
+
+        conv_validator = ConventionsValidator()
+        conv_report = conv_validator.validate(schema)
+        report.issues.extend(conv_report.issues)
+
+    if output == OutputFormat.JSON:
+        import json
+
+        data = {
+            "is_valid": report.is_valid,
+            "error_count": report.error_count,
+            "warning_count": report.warning_count,
+            "issues": [
+                {
+                    "severity": i.severity.value,
+                    "category": i.category,
+                    "artifact_type": i.artifact_type,
+                    "artifact_name": i.artifact_name,
+                    "message": i.message,
+                }
+                for i in report.issues
+            ],
+        }
+        console.print_json(json.dumps(data))
+    else:
+        if report.is_valid:
+            console.print(f"[green]Validación OK[/green] ({report.warning_count} warnings)")
+        else:
+            console.print(f"[red]Validación FALLIDA[/red] ({report.error_count} errores, {report.warning_count} warnings)")
+
+        for issue in report.issues:
+            color = {"error": "red", "warning": "yellow", "info": "dim"}.get(
+                issue.severity.value, "white"
+            )
+            console.print(f"  [{color}]{issue}[/{color}]")
+
+    if not report.is_valid:
+        raise typer.Exit(1)
+
+
+@app.command(name="validate-conventions")
+def validate_conventions(
+    input: Annotated[str, typer.Option("--input", "-i", help="Path al .xlsx")],
+    module: Annotated[str, typer.Option("--module", help="Módulo destino")] = "Operaciones",
+    conventions_file: Annotated[
+        str, typer.Option("--conventions-file", help="Path al YAML de convenciones")
+    ] = "",
+) -> None:
+    """Valida naming conventions contra el archivo de convenciones."""
+    from mendex.validators.conventions import ConventionsValidator
+
+    schema = _parse_input(input, module, None)
+
+    conv_path = Path(conventions_file) if conventions_file else None
+    validator = ConventionsValidator(conventions_path=conv_path)
+    report = validator.validate(schema)
+
+    if not report.issues:
+        console.print("[green]Todas las convenciones de naming están OK[/green]")
+    else:
+        for issue in report.issues:
+            color = {"error": "red", "warning": "yellow", "info": "dim"}.get(
+                issue.severity.value, "white"
+            )
+            console.print(f"  [{color}]{issue}[/{color}]")
+
+    if not report.is_valid:
+        raise typer.Exit(1)
 
 
 # ═══════════════════════════════════════════════════════════════

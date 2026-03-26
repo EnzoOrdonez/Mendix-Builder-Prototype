@@ -15,11 +15,13 @@ las tareas mas tediosas del desarrollo en Mendix 10.24.16 LTS. Acepta multiples 
 de input (Excel o Figma) y genera artefactos Mendix completos y validados:
 
 - **Entidades** en el Domain Model con atributos y tipos correctos
-- **Paginas de formulario** (Create/Edit) con widgets apropiados
-- **Microflows** de validacion por campo y de guardado
+- **Asociaciones** entre entidades (1-*, *-*, 1-1) con cascade delete y ownership
+- **Paginas de formulario** (Create/Edit) con widgets reales (DataView, TextBox, CheckBox, DataGrid, etc.)
+- **Paginas Overview** con DataGrid, columnas y botones de accion
+- **Microflows** con actividades reales (Commit, Delete, Retrieve, Validate, ClosePage, etc.)
 - **Reglas de acceso** basicas por rol
 
-Todo validado contra las **buenas practicas oficiales de Mendix** antes de aplicar cambios.
+Todo validado contra las **buenas practicas oficiales de Mendix** y **convenciones de naming** antes de aplicar cambios.
 
 ### Motivacion
 
@@ -249,6 +251,28 @@ mendex audit --mpr proyecto.mpr --no-bp
 mendex audit --mpr proyecto.mpr --output json --no-bp
 ```
 
+### Generar plantilla Excel pre-formateada
+
+```bash
+mendex init-excel --module Operaciones --entities 3 --output mi_proyecto.xlsx
+```
+
+Genera un `.xlsx` con headers, dropdowns de validacion, hojas `_Relaciones` y `_Seguridad`, y filas de ejemplo.
+
+### Validar schema (sin generar)
+
+```bash
+mendex validate --input formulario.xlsx --conventions --module Operaciones
+```
+
+Valida cross-references entre entidades/paginas/microflows y naming conventions (PascalCase, prefijos de microflow, etc.).
+
+### Validar solo naming conventions
+
+```bash
+mendex validate-conventions --input formulario.xlsx
+```
+
 ---
 
 ## Interpretar el Reporte de Dry-Run
@@ -314,6 +338,19 @@ Resumen rapido:
 
 ---
 
+## Tests
+
+```bash
+pytest tests/ -q              # Todos (773+ tests)
+pytest tests/unit/ -q         # Unitarios (rapidos, sin dependencias)
+pytest tests/integration/ -q  # Integracion (MockSDKClient, fixtures)
+pytest tests/ --cov=src/mendex --cov-report=html  # Con cobertura
+```
+
+Ver guia completa de pruebas (incluyendo pruebas reales con Mendix Studio Pro) en [`docs/TESTING.md`](docs/TESTING.md).
+
+---
+
 ## Estructura del Proyecto
 
 ```
@@ -328,20 +365,36 @@ mendex-agent-prototype/
 │   ├── llm/                 # LLMProvider + cache SQLite
 │   ├── bridge/              # SDK bridge + rollback
 │   ├── generators/          # Generadores de entidades/paginas/microflows
+│   ├── validators/          # Validadores post-generacion y convenciones
+│   ├── templates/           # Generador de plantilla Excel
 │   ├── auditor/             # Motor de auditoria
 │   ├── logging/             # Logger estructurado
 │   └── config/              # Settings (pydantic-settings)
 ├── mendix_sdk/              # Modulo Node.js (Mendix Model SDK)
+│   └── src/handlers/        # Handlers TypeScript (entity, page, microflow, association)
 ├── knowledge_base/          # BP oficiales + vector store
 ├── conventions/             # copeinca_conventions.yaml
 ├── reference_project/       # Proyecto COPEINCA (gitignored)
 ├── cache/                   # Cache LLM SQLite (gitignored)
 ├── logs/                    # Logs estructurados (gitignored)
 ├── tests/                   # Unit, integration, e2e
-├── fixtures/                # Datos de prueba
+├── fixtures/                # Datos de prueba (Excel, scripts)
 ├── docs/                    # Documentacion tecnica
 └── scripts/                 # Setup y utilidades
 ```
+
+---
+
+## Mejoras v2
+
+- Widgets reales en paginas (DataView, TextBox, CheckBox, DatePicker, DataGrid, ReferenceSelector, etc.)
+- Actividades reales en microflows (Commit, Delete, Retrieve, Change, MicroflowCall, ClosePage, ShowMessage, Validation)
+- Asociaciones en domain model (1-*, *-*, 1-1, cascade delete, ownership)
+- Validacion post-generacion de cross-references (entidades, paginas, microflows, botones)
+- Validacion de naming conventions (PascalCase, prefijos ACT/VAL/DS/SUB, sufijos de pagina)
+- Plantilla Excel con dropdowns y validacion (`mendex init-excel`)
+- Sugerencias fuzzy para errores de tipeo en columnas y tipos de dato
+- 773+ tests automatizados (unitarios, integracion, E2E round-trip)
 
 ---
 
@@ -361,6 +414,7 @@ mendex-agent-prototype/
 - [x] **Fase 11**: Servidor REST FastAPI (MCP-compatible)
 - [x] **Fase 12**: CLI completa con todos los flags
 - [x] **Fase 13**: Tests de integracion + proyecto Mendix demo
+- [x] **Fase 14**: v2 — Widgets reales, actividades, asociaciones, validadores y plantilla Excel
 
 ---
 

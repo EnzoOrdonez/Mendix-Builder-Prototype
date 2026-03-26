@@ -244,7 +244,13 @@ class TestExcelDataTypes:
         xlsx = _create_xlsx(tmp_path, {"Test": rows})
         parser = ExcelParser()
         schema = parser.parse(xlsx)
-        assert schema.entities[0].attributes[0].mendix_type == expected
+        if expected == MendixDataType.ENUMERATION:
+            # Enum fields become lookup entities, not attributes on the parent
+            lookup = next(e for e in schema.entities if e.is_lookup)
+            assert lookup.name == "Campo1"
+            assert lookup.seed_values == ["A", "B", "C"]
+        else:
+            assert schema.entities[0].attributes[0].mendix_type == expected
 
     def test_invalid_data_type_raises(self, tmp_path: Path):
         rows = [
@@ -359,16 +365,25 @@ class TestExcelEnumerations:
     """Tests para enumeraciones."""
 
     def test_enum_with_values(self, tmp_path: Path):
+        """Enum fields become lookup entities with seed_values."""
         rows = [
             ["NombreCampo", "TipoDato", "ValoresEnum"],
             ["Estado", "Enum", "Pendiente,Aprobado,Rechazado"],
         ]
         xlsx = _create_xlsx(tmp_path, {"Test": rows})
         schema = ExcelParser().parse(xlsx)
-        attr = schema.entities[0].attributes[0]
-        assert attr.mendix_type == MendixDataType.ENUMERATION
-        assert attr.enum_values == ["Pendiente", "Aprobado", "Rechazado"]
-        assert attr.widget_type == WidgetType.DROP_DOWN
+        # Parent entity has no enum attribute (it was extracted)
+        parent = next(e for e in schema.entities if not e.is_lookup)
+        assert all(a.name != "Estado" for a in parent.attributes)
+        # Lookup entity created
+        lookup = next(e for e in schema.entities if e.is_lookup)
+        assert lookup.name == "Estado"
+        assert lookup.seed_values == ["Pendiente", "Aprobado", "Rechazado"]
+        assert lookup.attributes[0].name == "Name"
+        # Lookup association created
+        assoc = next(a for a in schema.associations if a.is_lookup)
+        assert assoc.parent_entity == "Estado"
+        assert assoc.child_entity == "Test"
 
     def test_enum_without_values_raises(self, tmp_path: Path):
         rows = [
@@ -387,7 +402,8 @@ class TestExcelEnumerations:
         ]
         xlsx = _create_xlsx(tmp_path, {"Test": rows})
         schema = ExcelParser().parse(xlsx)
-        assert schema.entities[0].attributes[0].enum_values == ["A", "B", "C"]
+        lookup = next(e for e in schema.entities if e.is_lookup)
+        assert lookup.seed_values == ["A", "B", "C"]
 
 
 # ─── Tests: Requerido (truthy values) ───────────────────────
@@ -524,10 +540,11 @@ class TestExcelMicroflowGeneration:
         ]
         xlsx = _create_xlsx(tmp_path, {"Producto": rows})
         schema = ExcelParser().parse(xlsx)
-        assert len(schema.microflows) == 2
+        assert len(schema.microflows) == 3
         names = {mf.name for mf in schema.microflows}
         assert "VAL_Producto_Validate" in names
         assert "ACT_Producto_Save" in names
+        assert "ACT_Producto_Delete" in names
 
     def test_microflow_types(self, tmp_path: Path):
         rows = [
@@ -803,8 +820,8 @@ class TestExcelFullSchema:
             assert page.entity == "OrdenCompra"
             assert page.module == "Operaciones"
 
-        # Microflows
-        assert len(schema.microflows) == 2
+        # Microflows (VAL_Validate + ACT_Save + ACT_Delete)
+        assert len(schema.microflows) == 3
         for mf in schema.microflows:
             assert mf.entity == "OrdenCompra"
             assert mf.module == "Operaciones"

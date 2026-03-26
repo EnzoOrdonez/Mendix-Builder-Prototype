@@ -219,8 +219,12 @@ class TestPageWidgets:
         )
         gen.generate(schema, mpr_path)
         widgets = mock_sdk.created_pages[0]["widgets"]
-        assert all(w["widget_type"] == "DataGridColumn" for w in widgets)
-        assert all(w["editable"] is False for w in widgets)
+        grid_cols = [w for w in widgets if w["widget_type"] == "DataGridColumn"]
+        search_fields = [w for w in widgets if w["widget_type"] == "SearchField"]
+        assert len(grid_cols) >= 1
+        assert all(w["editable"] is False for w in grid_cols)
+        # Overview pages now also include SearchField widgets for searchable columns
+        assert all(w["widget_type"] in ("DataGridColumn", "SearchField") for w in widgets)
 
     def test_create_page_widgets_editable(self, mock_sdk: MockSDKClient, mpr_path: Path):
         gen = PageGenerator(sdk_client=mock_sdk)

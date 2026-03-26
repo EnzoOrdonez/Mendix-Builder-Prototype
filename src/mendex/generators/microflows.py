@@ -20,10 +20,12 @@ import structlog
 from mendex.bridge.sdk_client import SDKClient, SDKClientError
 from mendex.logging.decision_logger import DecisionLogger
 from mendex.schema.intermediate import (
+    AssociationSchema,
     EntitySchema,
     IntermediateSchema,
     MicroflowSchema,
     MicroflowType,
+    PageType,
 )
 
 logger = structlog.get_logger(__name__)
@@ -105,6 +107,10 @@ class MicroflowGenerator:
     ) -> MicroflowGenerationResult:
         """Genera todos los microflows del schema.
 
+        Also generates:
+        - ACT_{Entity}_Calculate for entities with calculated fields
+        - ACT_{Entity}_CascadeDelete for associations with cascade_delete=True
+
         Args:
             schema: IntermediateSchema con microflows a crear.
             mpr_path: Path al .mpr.
@@ -115,17 +121,131 @@ class MicroflowGenerator:
         """
         result = MicroflowGenerationResult()
 
-        if not schema.microflows:
-            return result
-
         entity_map = {e.name: e for e in schema.entities}
+
+        # Collect all microflows to create: explicit + auto-generated
+        all_microflows: list[MicroflowSchema] = list(schema.microflows)
+
+        # Auto-generate calculation microflows for entities with calculated fields
+        for entity in schema.entities:
+            calc_attrs = [a for a in entity.attributes if a.is_calculated]
+            if calc_attrs:
+                calc_desc = "; ".join(
+                    f"{a.name} = {a.calculation_expression or 'TBD'}"
+                    for a in calc_attrs
+                )
+                all_microflows.append(MicroflowSchema(
+                    name=f"ACT_{entity.name}_Calculate",
+                    microflow_type=MicroflowType.CUSTOM,
+                    entity=entity.name,
+                    module=entity.module,
+                    logic_description=f"Calcular campos derivados: {calc_desc}",
+                ))
+
+        # Auto-generate seed data microflows for lookup entities
+        for entity in schema.entities:
+            if entity.is_lookup and entity.seed_values:
+                values_str = ", ".join(entity.seed_values)
+                seed_activities: list[dict[str, Any]] = []
+                for value in entity.seed_values:
+                    seed_activities.append({
+                        "type": "RetrieveActivity",
+                        "action": "find_by_name",
+                        "entity": entity.name,
+                        "value": value,
+                    })
+                    seed_activities.append({
+                        "type": "CreateActivity",
+                        "action": "create_if_not_exists",
+                        "entity": entity.name,
+                        "attribute": "Name",
+                        "value": value,
+                    })
+                all_microflows.append(MicroflowSchema(
+                    name=f"ASe_Initialize{entity.name}",
+                    microflow_type=MicroflowType.CUSTOM,
+                    entity=entity.name,
+                    module=entity.module,
+                    logic_description=(
+                        f"After Startup: inicializar tabla maestra {entity.name} "
+                        f"con valores [{values_str}]. "
+                        f"Para cada valor, si no existe registro con Name=valor, crearlo."
+                    ),
+                ))
+
+        # Auto-generate DS_OS_ (selectable objects) microflows for lookup entities
+        for entity in schema.entities:
+            if entity.is_lookup:
+                all_microflows.append(MicroflowSchema(
+                    name=f"DS_OS_{entity.name}",
+                    microflow_type=MicroflowType.DATA_SOURCE,
+                    entity=entity.name,
+                    module=entity.module,
+                    logic_description=(
+                        f"Recuperar todos los objetos de {entity.name} "
+                        f"para selección en formularios (Selectable Objects)"
+                    ),
+                    return_entity=entity.name,
+                ))
+
+        # Auto-generate SUB_SetSecuencia microflows for sequential entities
+        for entity in schema.entities:
+            if entity.has_sequential:
+                all_microflows.append(MicroflowSchema(
+                    name=f"SUB_{entity.name}_SetSecuencia",
+                    microflow_type=MicroflowType.SEQUENCE,
+                    entity=entity.name,
+                    module=entity.module,
+                    logic_description=(
+                        f"Asignar número secuencial a {entity.name}: "
+                        f"max(Secuencia existentes) + 1"
+                    ),
+                ))
+
+        # Auto-generate DS_Filtros microflows for pages with filter entities
+        seen_ds_filtros: set[str] = set()
+        for page in schema.pages:
+            if page.filter_entity and page.page_type == PageType.OVERVIEW:
+                mf_name = f"DS_{page.entity}_Filtros"
+                if mf_name not in seen_ds_filtros:
+                    seen_ds_filtros.add(mf_name)
+                    all_microflows.append(MicroflowSchema(
+                        name=mf_name,
+                        microflow_type=MicroflowType.DATA_SOURCE,
+                        entity=page.filter_entity,
+                        module=page.module,
+                        logic_description=(
+                            f"Recuperar valores distintos de la data actual de "
+                            f"{page.entity} para cada filtro dinámico"
+                        ),
+                        return_entity=page.filter_entity,
+                    ))
+
+        # Auto-generate cascade delete microflows
+        for assoc in schema.associations:
+            if assoc.cascade_delete:
+                all_microflows.append(MicroflowSchema(
+                    name=f"ACT_{assoc.parent_entity}_CascadeDelete",
+                    microflow_type=MicroflowType.DELETE,
+                    entity=assoc.parent_entity,
+                    module=entity_map[assoc.parent_entity].module
+                    if assoc.parent_entity in entity_map
+                    else schema.entities[0].module if schema.entities else "Default",
+                    logic_description=(
+                        f"Eliminar {assoc.parent_entity} con sus "
+                        f"{assoc.child_entity} asociados (cascade)"
+                    ),
+                ))
+
+        if not all_microflows:
+            return result
 
         logger.info(
             "microflow_generation_started",
-            microflows=len(schema.microflows),
+            microflows=len(all_microflows),
         )
 
-        for mf in schema.microflows:
+        for mf in all_microflows:
             entity = entity_map.get(mf.entity)
             mf_result = self._create_microflow(mf, entity, mpr_path)
             result.microflows.append(mf_result)
@@ -252,6 +372,10 @@ class MicroflowGenerator:
             return self._save_activities(mf, entity)
         elif mf.microflow_type == MicroflowType.DELETE:
             return self._delete_activities(mf)
+        elif mf.microflow_type == MicroflowType.DATA_SOURCE:
+            return self._data_source_activities(mf)
+        elif mf.microflow_type == MicroflowType.SEQUENCE:
+            return self._sequence_activities(mf)
         else:
             # CUSTOM: empty body
             return []
@@ -341,9 +465,43 @@ class MicroflowGenerator:
             },
         ]
 
+    def _data_source_activities(self, mf: MicroflowSchema) -> list[dict[str, Any]]:
+        """Genera actividades para microflow DataSource (retrieve all)."""
+        return [
+            {
+                "type": "RetrieveActivity",
+                "action": "retrieve_all",
+                "entity": mf.entity,
+                "source": "database",
+                "description": mf.logic_description,
+            },
+        ]
+
+    def _sequence_activities(self, mf: MicroflowSchema) -> list[dict[str, Any]]:
+        """Genera actividades para microflow de numeración secuencial."""
+        return [
+            {
+                "type": "RetrieveActivity",
+                "action": "aggregate_max",
+                "entity": mf.entity,
+                "attribute": "Secuencia",
+                "description": "Obtener máximo valor de Secuencia actual",
+            },
+            {
+                "type": "ChangeActivity",
+                "action": "set_attribute",
+                "entity": mf.entity,
+                "attribute": "Secuencia",
+                "value": "$MaxSecuencia + 1",
+                "description": "Asignar siguiente número secuencial",
+            },
+        ]
+
     @staticmethod
     def _determine_return_type(mf: MicroflowSchema) -> str:
         """Determina el tipo de retorno del microflow."""
         if mf.microflow_type == MicroflowType.VALIDATION:
             return "Boolean"
+        if mf.microflow_type == MicroflowType.DATA_SOURCE:
+            return f"List of {mf.return_entity or mf.entity}"
         return "Void"

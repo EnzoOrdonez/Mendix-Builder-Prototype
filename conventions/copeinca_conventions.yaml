@@ -5,42 +5,174 @@
 # SÍ se commitea al repositorio (no contiene datos sensibles, solo patrones).
 # Editable manualmente si se necesita ajustar patrones.
 #
+# Generado: 2026-03-20T09:21:16.061588+00:00
+# Hash .mpr: 069b7a7dfe10e6b7...
+#
 # Para regenerar: mendex refresh-conventions --mpr reference_project/COPEINCA.mpr
 
 project:
-  name: "COPEINCA"
-  mendix_version: "10.24.16"
-  extracted_at: "1970-01-01T00:00:00Z"  # Placeholder — se actualiza al ejecutar refresh
-  mpr_hash: "pending"  # Se calcula al ejecutar refresh-conventions
-
+  name: GestionProcesal
+  mendix_version: 10.24.16
+  extracted_at: '2026-03-20T09:21:16.061588+00:00'
+  mpr_hash: 069b7a7dfe10e6b753462be700c7cbbf66385fbf3046bed440e404fa537bbd3f
 naming:
   entities:
-    pattern: "PascalCase"
-    prefix: ""
-    examples: []
+    pattern: PascalCase
+    prefix: ''
+    examples:
+    - Account
+    - AccountPasswordData
+    - SGP_Estudio
+    - LoginContext
+    - Log
+    - LogLine
+    - AudittrailSuperClass
+    - UIToggle
+    - ReferenceLog
+    - ReferenceLogLine
   attributes:
-    pattern: "PascalCase"
-    examples: []
+    pattern: Mixed
+    examples:
+    - SGP_Resolucion
+    - Attribute
+    - SGP_EstadoTarea
+    - SGP_Cant_Archivos_Pestana
+    - IncomingHost
+    - ColumnWidth
+    - SGP_Cantidad
+    - SGP_Sede
+    - MaxLength
+    - ShowForRecepcionista
   microflows:
-    pattern: "{Action}_{Entity}_{Qualifier}"
-    examples: []
+    pattern: '{Prefix}_{Entity}_{Action}'
+    examples:
+    - ChangeMyPassword
+    - ShowMyPasswordForm
+    - ManageMyAccount
+    - NewAccount
+    - ChangePassword
+    - NewWebServiceAccount
+    - ShowPasswordForm
+    - SaveNewAccount
+    - Afterstartup
+    - OCl_ToggleUI
   pages:
-    pattern: "{Entity}_{Action}"
-    examples: []
-
-modules: []
-
+    pattern: '{Entity}_{Action}'
+    examples:
+    - ActiveSessions
+    - RuntimeInstances
+    - ScheduledEvents
+    - MyAccount
+    - ChangeMyPasswordForm
+    - Account_Overview
+    - Account_Overview
+    - ChangePasswordForm
+    - Account_New
+    - Account_Edit
+modules:
+- name: Administration
+  entity_count: 3
+  description: ''
+- name: AfterStartup
+  entity_count: 0
+  description: ''
+- name: Atlas_Core
+  entity_count: 0
+  description: ''
+- name: Atlas_Web_Content
+  entity_count: 1
+  description: ''
+- name: AuditTrail
+  entity_count: 7
+  description: ''
+- name: COPE_ApplicationSpecific
+  entity_count: 0
+  description: ''
+- name: COPE_Atlas_Extension
+  entity_count: 0
+  description: ''
+- name: COPE_Theming
+  entity_count: 0
+  description: ''
+- name: ChangePassword
+  entity_count: 0
+  description: ''
+- name: CommunityCommons
+  entity_count: 2
+  description: ''
+- name: DataImporter
+  entity_count: 5
+  description: ''
+- name: DataWidgets
+  entity_count: 0
+  description: ''
+- name: Email_Connector
+  entity_count: 27
+  description: ''
+- name: Encryption
+  entity_count: 3
+  description: ''
+- name: ExcelImporter
+  entity_count: 7
+  description: ''
+- name: FeedbackModule
+  entity_count: 0
+  description: ''
+- name: ForgotPassword
+  entity_count: 8
+  description: ''
+- name: GestionProcesal
+  entity_count: 59
+  description: ''
+- name: MxModelReflection
+  entity_count: 15
+  description: ''
+- name: NanoflowCommons
+  entity_count: 2
+  description: ''
+- name: OQL
+  entity_count: 4
+  description: ''
+- name: PrintClass
+  entity_count: 0
+  description: ''
+- name: WebActions
+  entity_count: 0
+  description: ''
+- name: XLSReport
+  entity_count: 14
+  description: ''
+- name: mFlex
+  entity_count: 0
+  description: ''
 common_patterns:
   access_rules:
-    roles: []
-    default_policy: "deny_all_then_grant"
+    roles:
+    - Administrator
+    - User
+    - UsuariosAnonimos
+    - LegalInterno
+    - LegalExterno
+    - Recepcionista
+    - RelacionesLaborales
+    - Planta
+    - Seguimiento
+    - LegalInternoVisualizacion
+    - LegalExternoVisualizacion
+    default_policy: deny_all_then_grant
   validation:
-    common_types: ["required", "max_length"]
-    error_message_language: "es"
+    common_types:
+    - required
+    - max_length
+    error_message_language: es
   page_layouts:
-    default: "Atlas_Default"
-    popup: "PopupLayout"
-
+    default: Atlas_Default
+    popup: PopupLayout
 data_types:
-  most_used: ["String", "DateTime", "Decimal", "Integer", "Boolean"]
+  most_used:
+  - SGP_Nombre
+  - Name
+  - Username
+  - Status
+  - Password
   enumerations: []

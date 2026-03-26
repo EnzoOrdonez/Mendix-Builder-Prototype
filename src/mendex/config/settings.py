@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     # --- Mendix Platform SDK ---
     mendix_token: str = ""
+    mendix_app_id: str = ""
 
     # --- Figma (opcional) ---
     figma_access_token: str = ""

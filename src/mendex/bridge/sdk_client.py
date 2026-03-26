@@ -17,6 +17,7 @@ Fase 9: Agregar create_page, create_microflow.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import threading
 from abc import ABC, abstractmethod
@@ -162,6 +163,24 @@ class SDKClient(ABC):
         """
         ...
 
+    @abstractmethod
+    def create_association(
+        self,
+        mpr_path: Path,
+        association_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Crea una asociación entre dos entidades en el .mpr.
+
+        Args:
+            mpr_path: Path al .mpr.
+            association_data: Dict con name, parent_entity, child_entity,
+                association_type, owner, cascade_delete, is_lookup.
+
+        Returns:
+            Dict con status y detalles de la asociación creada.
+        """
+        ...
+
 
 class SubprocessSDKClient(SDKClient):
     """Implementación de SDKClient via subprocess Node.js con JSON-RPC stdio.
@@ -174,8 +193,9 @@ class SubprocessSDKClient(SDKClient):
         structure = client.read_project_structure(Path("proyecto.mpr"))
     """
 
-    def __init__(self, node_script: Path) -> None:
+    def __init__(self, node_script: Path, app_id: str = "") -> None:
         self._node_script = node_script
+        self._app_id = app_id or os.environ.get("MENDIX_APP_ID", "")
         self._process: subprocess.Popen | None = None
         self._lock = threading.Lock()
         self._request_id = 0
@@ -254,7 +274,7 @@ class SubprocessSDKClient(SDKClient):
     def read_project_structure(self, mpr_path: Path) -> ProjectStructure:
         result = self._send_request(
             "readProjectStructure",
-            {"mprPath": str(mpr_path.resolve())},
+            {"appId": self._app_id, "mprPath": str(mpr_path.resolve())},
         )
         return self._parse_project_structure(result)
 
@@ -264,7 +284,7 @@ class SubprocessSDKClient(SDKClient):
         result = self._send_request(
             "checkArtifactExists",
             {
-                "mprPath": str(mpr_path.resolve()),
+                "appId": self._app_id,
                 "artifactType": artifact_type,
                 "module": module,
                 "name": name,
@@ -277,7 +297,7 @@ class SubprocessSDKClient(SDKClient):
     ) -> dict[str, Any]:
         result = self._send_request(
             "createEntity",
-            {"mprPath": str(mpr_path.resolve()), "entity": entity_data},
+            {"appId": self._app_id, "entity": entity_data},
         )
         return result or {}
 
@@ -286,7 +306,7 @@ class SubprocessSDKClient(SDKClient):
     ) -> dict[str, Any]:
         result = self._send_request(
             "createPage",
-            {"mprPath": str(mpr_path.resolve()), "page": page_data},
+            {"appId": self._app_id, "page": page_data},
         )
         return result or {}
 
@@ -295,7 +315,32 @@ class SubprocessSDKClient(SDKClient):
     ) -> dict[str, Any]:
         result = self._send_request(
             "createMicroflow",
-            {"mprPath": str(mpr_path.resolve()), "microflow": microflow_data},
+            {"appId": self._app_id, "microflow": microflow_data},
+        )
+        return result or {}
+
+    def create_association(
+        self, mpr_path: Path, association_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        result = self._send_request(
+            "createAssociation",
+            {"appId": self._app_id, "association": association_data},
+        )
+        return result or {}
+
+    def commit_session(self, branch_name: str = "main") -> dict[str, Any]:
+        """Commits all pending changes to the Mendix repository."""
+        result = self._send_request(
+            "commitSession",
+            {"branchName": branch_name},
+        )
+        return result or {}
+
+    def open_session(self, branch_name: str = "main") -> dict[str, Any]:
+        """Opens a working copy session for the configured app."""
+        result = self._send_request(
+            "openSession",
+            {"appId": self._app_id, "branchName": branch_name},
         )
         return result or {}
 
@@ -354,6 +399,7 @@ class MockSDKClient(SDKClient):
         self.created_entities: list[dict[str, Any]] = []
         self.created_pages: list[dict[str, Any]] = []
         self.created_microflows: list[dict[str, Any]] = []
+        self.created_associations: list[dict[str, Any]] = []
 
     def ping(self) -> bool:
         return True
@@ -399,3 +445,10 @@ class MockSDKClient(SDKClient):
         module = microflow_data.get("module", "unknown")
         self._existing.add(f"microflow:{module}.{name}")
         return {"status": "created", "name": name, "module": module}
+
+    def create_association(
+        self, mpr_path: Path, association_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        self.created_associations.append(association_data)
+        name = association_data.get("name", "unknown")
+        return {"status": "created", "name": name}

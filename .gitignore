@@ -69,6 +69,10 @@ knowledge_base/chroma_db/
 # El hash del .mpr no se commitea (es local)
 conventions/.mpr_hash
 
+# ---------- Logs (generated) ----------
+*.log
+mendix_sdk/stderr.log
+
 # ---------- Testing ----------
 .pytest_cache/
 .coverage
