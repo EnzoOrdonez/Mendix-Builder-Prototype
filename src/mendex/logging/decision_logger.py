@@ -31,7 +31,7 @@ class PatternSource(str, Enum):
     """Fuente del patrón aplicado."""
 
     OFFICIAL_BP = "official_bp"
-    COPEINCA_CONVENTIONS = "copeinca_conventions"
+    PROJECT_CONVENTIONS = "project_conventions"
     FIGMA = "figma"
     EXCEL = "excel"
     NONE = "none"

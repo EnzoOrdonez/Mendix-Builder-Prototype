@@ -88,7 +88,7 @@ def conventions_yaml(tmp_path: Path) -> Path:
     yaml_path = tmp_path / "conventions.yaml"
     data = {
         "project": {
-            "name": "COPEINCA",
+            "name": "MiProyecto",
             "mendix_version": "10.24.16",
             "extracted_at": "2026-01-15T10:00:00Z",
             "mpr_hash": "abc123",

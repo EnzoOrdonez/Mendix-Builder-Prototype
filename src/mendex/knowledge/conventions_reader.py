@@ -1,4 +1,4 @@
-"""Lector de copeinca_conventions.yaml.
+"""Lector de project_conventions.yaml.
 
 Carga, valida y provee acceso a las convenciones del proyecto de
 referencia. Fuente de contexto secundario para el agente.
@@ -23,14 +23,14 @@ class ConventionsReaderError(Exception):
 
 
 class ConventionsReader:
-    """Lee y provee acceso al copeinca_conventions.yaml.
+    """Lee y provee acceso al project_conventions.yaml.
 
     Carga el archivo una vez y ofrece métodos para consultar
     patrones específicos. Calcula hash del contenido para
     invalidación de caché LLM.
 
     Uso:
-        reader = ConventionsReader(Path("conventions/copeinca_conventions.yaml"))
+        reader = ConventionsReader(Path("conventions/project_conventions.yaml"))
         reader.load()
 
         pattern = reader.entity_naming_pattern  # "PascalCase"

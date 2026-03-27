@@ -6,7 +6,7 @@ CONFORME, NO_CONFORME, SIN_DATOS.
 
 Jerarquía de fuentes:
 1. BP oficial de Mendix (ChromaDB RAG) — siempre gana
-2. copeinca_conventions.yaml — se aplica solo si no contradice BPs
+2. project_conventions.yaml — se aplica solo si no contradice BPs
 3. Si hay conflicto: se aplica BP oficial y se notifica al usuario
 
 Fase 4: Implementación completa.

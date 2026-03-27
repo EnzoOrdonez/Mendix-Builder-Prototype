@@ -78,7 +78,7 @@ def tmp_mpr(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def output_path(tmp_path: Path) -> Path:
-    return tmp_path / "conventions" / "copeinca_conventions.yaml"
+    return tmp_path / "conventions" / "project_conventions.yaml"
 
 
 @pytest.fixture
@@ -338,7 +338,7 @@ class TestConventionsReader:
         yaml_path = tmp_path / "conventions.yaml"
         data = {
             "project": {
-                "name": "COPEINCA",
+                "name": "MiProyecto",
                 "mendix_version": "10.24.16",
                 "extracted_at": "2026-01-15T10:00:00Z",
                 "mpr_hash": "abc123",
@@ -406,7 +406,7 @@ class TestConventionsReader:
     def test_project_name(self, populated_yaml: Path) -> None:
         reader = ConventionsReader(populated_yaml)
         reader.load()
-        assert reader.project_name == "COPEINCA"
+        assert reader.project_name == "MiProyecto"
 
     def test_mendix_version(self, populated_yaml: Path) -> None:
         reader = ConventionsReader(populated_yaml)
@@ -467,7 +467,7 @@ class TestConventionsReader:
         reader.load()
         ctx = reader.as_context_string()
 
-        assert "COPEINCA" in ctx
+        assert "MiProyecto" in ctx
         assert "PascalCase" in ctx
         assert "Administrator" in ctx
         assert "Administracion" in ctx

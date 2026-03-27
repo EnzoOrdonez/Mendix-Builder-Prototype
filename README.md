@@ -208,7 +208,7 @@ mendex audit --mpr proyecto.mpr
 ### Refrescar convenciones desde proyecto de referencia
 
 ```bash
-mendex refresh-conventions --mpr reference_project/COPEINCA.mpr
+mendex refresh-conventions --mpr reference_project/MiProyecto.mpr
 ```
 
 ### Modo estricto (aborta si hay NO_CONFORME)
@@ -373,8 +373,8 @@ mendex-agent-prototype/
 ├── mendix_sdk/              # Modulo Node.js (Mendix Model SDK)
 │   └── src/handlers/        # Handlers TypeScript (entity, page, microflow, association)
 ├── knowledge_base/          # BP oficiales + vector store
-├── conventions/             # copeinca_conventions.yaml
-├── reference_project/       # Proyecto COPEINCA (gitignored)
+├── conventions/             # project_conventions.yaml
+├── reference_project/       # Proyecto de referencia (gitignored)
 ├── cache/                   # Cache LLM SQLite (gitignored)
 ├── logs/                    # Logs estructurados (gitignored)
 ├── tests/                   # Unit, integration, e2e
@@ -403,7 +403,7 @@ mendex-agent-prototype/
 - [x] **Fase 0**: Setup, scaffolding y configuracion base
 - [x] **Fase 1**: Sistema de rollback / backup del .mpr
 - [x] **Fase 2**: Logger estructurado y cache LLM
-- [x] **Fase 3**: Extractor de convenciones COPEINCA
+- [x] **Fase 3**: Extractor de convenciones de proyecto de referencia
 - [x] **Fase 4**: Pipeline RAG con BP oficiales
 - [x] **Fase 5**: Motor de dry-run e idempotency checker
 - [x] **Fase 6**: Parser Excel → IntermediateSchema
@@ -422,8 +422,8 @@ mendex-agent-prototype/
 
 | Archivo/Carpeta | Se commitea | Razon |
 |---|---|---|
-| `conventions/copeinca_conventions.yaml` | Si | Patrones de estructura, no datos sensibles |
-| `conventions/copeinca_conventions.schema.json` | Si | Esquema de validacion |
+| `conventions/project_conventions.yaml` | Si | Patrones de estructura, no datos sensibles |
+| `conventions/project_conventions.schema.json` | Si | Esquema de validacion |
 | `knowledge_base/mendix_bp_official/*.md` | Si | Documentacion publica de Mendix |
 | `reference_project/*.mpr` | **No** | Datos sensibles del proyecto real |
 | `cache/llm_responses.db` | **No** | Local por developer |

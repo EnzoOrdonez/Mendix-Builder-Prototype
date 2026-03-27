@@ -138,7 +138,7 @@ class ClaudeProvider(LLMProvider):
     def update_conventions_hash(self, new_hash: str) -> None:
         """Actualiza el hash de convenciones usado para el caché.
 
-        Llamar cuando copeinca_conventions.yaml cambie.
+        Llamar cuando project_conventions.yaml cambie.
         """
         if self._cache and self._conventions_hash and new_hash != self._conventions_hash:
             invalidated = self._cache.invalidate_by_conventions(self._conventions_hash)

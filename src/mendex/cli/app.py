@@ -296,7 +296,7 @@ def refresh_conventions(
     ],
     project_name: Annotated[
         str, typer.Option("--project-name", help="Nombre del proyecto de referencia")
-    ] = "COPEINCA",
+    ] = "MiProyecto",
     mendix_version: Annotated[
         str, typer.Option("--mendix-version", help="Versión de Mendix del proyecto")
     ] = "10.24.16",

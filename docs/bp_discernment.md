@@ -3,12 +3,12 @@
 ## Resumen
 
 El agente evalúa cada artefacto generado contra las buenas prácticas oficiales de Mendix
-y las convenciones del proyecto COPEINCA, emitiendo un veredicto para cada patrón.
+y las convenciones del proyecto de referencia, emitiendo un veredicto para cada patrón.
 
 ## Jerarquía de fuentes
 
 1. **BP oficiales de Mendix** (ChromaDB RAG) — siempre tienen prioridad
-2. **copeinca_conventions.yaml** — se aplican solo si no contradicen las BP oficiales
+2. **project_conventions.yaml** — se aplican solo si no contradicen las BP oficiales
 3. Si hay conflicto → se aplica la BP oficial y se notifica al usuario
 
 ## Veredictos

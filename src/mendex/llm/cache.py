@@ -116,7 +116,7 @@ class LLMCache:
 
         Args:
             input_hash: Hash SHA-256 del input.
-            conventions_hash: Hash SHA-256 del copeinca_conventions.yaml activo.
+            conventions_hash: Hash SHA-256 del project_conventions.yaml activo.
 
         Returns:
             Dict con la respuesta cacheada, o None si no hay cache hit.
@@ -172,7 +172,7 @@ class LLMCache:
 
         Args:
             input_hash: Hash SHA-256 del input.
-            conventions_hash: Hash SHA-256 del copeinca_conventions.yaml.
+            conventions_hash: Hash SHA-256 del project_conventions.yaml.
             response: Respuesta a cachear (debe ser JSON-serializable).
             model: Modelo de LLM que generó la respuesta.
         """
@@ -210,7 +210,7 @@ class LLMCache:
     def invalidate_by_conventions(self, old_conventions_hash: str) -> int:
         """Invalida todas las entradas que usaron un hash de convenciones específico.
 
-        Útil cuando se detecta que copeinca_conventions.yaml cambió.
+        Útil cuando se detecta que project_conventions.yaml cambió.
 
         Args:
             old_conventions_hash: Hash de las convenciones anteriores.

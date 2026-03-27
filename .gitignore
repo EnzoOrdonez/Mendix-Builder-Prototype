@@ -44,7 +44,7 @@ desktop.ini
 .env.*.local
 
 # ---------- Mendix ----------
-# Proyecto de referencia COPEINCA (datos sensibles)
+# Proyecto de referencia (datos sensibles)
 reference_project/*.mpr
 reference_project/*.mpr.bak
 reference_project/**/*.mpr

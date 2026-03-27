@@ -1,5 +1,5 @@
 # ============================================
-# COPEINCA Conventions — Patrones extraídos del proyecto de referencia
+# Project Conventions — Patrones extraídos del proyecto de referencia
 # ============================================
 # Este archivo se genera automáticamente con: mendex refresh-conventions --mpr <path>
 # SÍ se commitea al repositorio (no contiene datos sensibles, solo patrones).
@@ -8,7 +8,7 @@
 # Generado: 2026-03-20T09:21:16.061588+00:00
 # Hash .mpr: 069b7a7dfe10e6b7...
 #
-# Para regenerar: mendex refresh-conventions --mpr reference_project/COPEINCA.mpr
+# Para regenerar: mendex refresh-conventions --mpr reference_project/MiProyecto.mpr
 
 project:
   name: GestionProcesal

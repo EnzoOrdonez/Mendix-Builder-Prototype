@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     bp_docs_path: Path = Field(default=Path("knowledge_base/mendix_bp_official"))
 
     # --- Convenciones ---
-    conventions_path: Path = Field(default=Path("conventions/copeinca_conventions.yaml"))
+    conventions_path: Path = Field(default=Path("conventions/project_conventions.yaml"))
 
     # --- Rollback ---
     max_backups: int = 5

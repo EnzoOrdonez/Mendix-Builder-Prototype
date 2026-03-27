@@ -1,7 +1,7 @@
 """Extractor de convenciones desde un proyecto Mendix de referencia.
 
 Lee la estructura del .mpr via SDK Bridge, analiza patrones de naming,
-módulos, tipos de datos, roles, y genera copeinca_conventions.yaml.
+módulos, tipos de datos, roles, y genera project_conventions.yaml.
 
 La extracción ocurre UNA VEZ (o bajo demanda con --refresh-conventions).
 El hash del .mpr se persiste para detectar si el proyecto evolucionó.
@@ -46,10 +46,10 @@ class ConventionsExtractor:
     Uso:
         extractor = ConventionsExtractor(
             sdk_client=sdk_client,
-            output_path=Path("conventions/copeinca_conventions.yaml"),
+            output_path=Path("conventions/project_conventions.yaml"),
             hash_path=Path("conventions/.mpr_hash"),
         )
-        result = extractor.extract(mpr_path=Path("reference_project/COPEINCA.mpr"))
+        result = extractor.extract(mpr_path=Path("reference_project/MiProyecto.mpr"))
     """
 
     # Mendix data types reconocibles en atributos
@@ -64,7 +64,7 @@ class ConventionsExtractor:
         output_path: Path,
         hash_path: Path,
         decision_logger: DecisionLogger | None = None,
-        project_name: str = "COPEINCA",
+        project_name: str = "MiProyecto",
     ) -> None:
         self._sdk_client = sdk_client
         self._output_path = output_path
@@ -122,7 +122,7 @@ class ConventionsExtractor:
             self._decision_logger.log(
                 operation="extract_conventions",
                 input_hash=current_hash,
-                pattern_source=PatternSource.COPEINCA_CONVENTIONS,
+                pattern_source=PatternSource.PROJECT_CONVENTIONS,
                 action_taken="conventions_extracted",
                 extra={
                     "project_name": self._project_name,
@@ -335,7 +335,7 @@ class ConventionsExtractor:
 
         header = (
             "# ============================================\n"
-            "# COPEINCA Conventions — Patrones extraídos del proyecto de referencia\n"
+            "# Project Conventions — Patrones extraídos del proyecto de referencia\n"
             "# ============================================\n"
             "# Este archivo se genera automáticamente con: mendex refresh-conventions --mpr <path>\n"
             "# SÍ se commitea al repositorio (no contiene datos sensibles, solo patrones).\n"
@@ -344,7 +344,7 @@ class ConventionsExtractor:
             f"# Generado: {conventions['project']['extracted_at']}\n"
             f"# Hash .mpr: {conventions['project']['mpr_hash'][:16]}...\n"
             "#\n"
-            "# Para regenerar: mendex refresh-conventions --mpr reference_project/COPEINCA.mpr\n\n"
+            "# Para regenerar: mendex refresh-conventions --mpr reference_project/MiProyecto.mpr\n\n"
         )
 
         yaml_content = yaml.dump(

@@ -1,4 +1,4 @@
-"""Validador de convenciones de naming basado en copeinca_conventions.yaml.
+"""Validador de convenciones de naming basado en project_conventions.yaml.
 
 Verifica que los nombres de artefactos generados sigan los patrones
 definidos en el archivo de convenciones del proyecto.
@@ -70,8 +70,8 @@ def load_conventions(path: Path | None = None) -> dict[str, Any]:
     if path is None:
         # Default path relative to project root
         candidates = [
-            Path("conventions/copeinca_conventions.yaml"),
-            Path("copeinca_conventions.yaml"),
+            Path("conventions/project_conventions.yaml"),
+            Path("project_conventions.yaml"),
         ]
         for candidate in candidates:
             if candidate.exists():

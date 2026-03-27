@@ -240,7 +240,7 @@ class TestDryRunArtifact:
             module="Mod",
             bp_evaluation=_make_bp_evaluation(
                 BPVerdict.NO_CONFORME,
-                convention_conflict="Convención COPEINCA usa prefijo diferente",
+                convention_conflict="Convención del proyecto usa prefijo diferente",
             ),
         )
         lines = artifact.as_report_lines(1)

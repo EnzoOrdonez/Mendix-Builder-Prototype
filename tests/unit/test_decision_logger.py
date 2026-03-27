@@ -116,7 +116,7 @@ class TestDecisionLogger:
             operation="generate_entity",
             input_hash="abc123",
             bp_verdict=BPVerdict.CONFORME,
-            pattern_source=PatternSource.COPEINCA_CONVENTIONS,
+            pattern_source=PatternSource.PROJECT_CONVENTIONS,
             action_taken="proceed",
             warnings=["warn1", "warn2"],
             llm_model="claude-sonnet-4-5-20250514",
@@ -129,7 +129,7 @@ class TestDecisionLogger:
         assert parsed["operation"] == "generate_entity"
         assert parsed["input_hash"] == "abc123"
         assert parsed["bp_verdict"] == "CONFORME"
-        assert parsed["pattern_source"] == "copeinca_conventions"
+        assert parsed["pattern_source"] == "project_conventions"
         assert parsed["action_taken"] == "proceed"
         assert parsed["warnings"] == ["warn1", "warn2"]
         assert parsed["llm_model"] == "claude-sonnet-4-5-20250514"
