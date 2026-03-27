@@ -1,4 +1,4 @@
-# Sistema de Discernimiento de Buenas Prácticas
+# Sistema de Discernimiento de Buenas Practicas
 
 ## Resumen
 

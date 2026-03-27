@@ -1,4 +1,4 @@
-"""Configuración global del agente MendixFormAgent.
+"""Configuracion global del agente MendixFormAgent.
 
 Carga variables desde .env y aplica defaults sensatos.
 """

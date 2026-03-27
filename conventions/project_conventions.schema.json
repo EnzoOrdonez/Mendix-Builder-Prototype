@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Project Conventions",
+  "title": "Project Conventions Schema",
   "description": "Schema para el archivo project_conventions.yaml — patrones extraídos del proyecto de referencia.",
   "type": "object",
   "required": ["project", "naming", "modules", "common_patterns", "data_types"],

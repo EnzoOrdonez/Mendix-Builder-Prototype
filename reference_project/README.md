@@ -1,6 +1,6 @@
 # Proyecto de Referencia
 
-Coloca aquí el archivo `.mpr` de tu proyecto Mendix de referencia (Mendix 10.24).
+Coloca aqui el archivo `.mpr` de tu proyecto Mendix de referencia (Mendix 10.24).
 
 ## Instrucciones
 

@@ -1,4 +1,4 @@
-"""Tests unitarios para el logger estructurado (decisions.jsonl).
+"""Tests unitarios para el decision logger estructurado (decisions.jsonl).
 
 Fase 2: Cobertura completa de DecisionLogger.
 """

@@ -1,6 +1,6 @@
 # MendixFormAgent
 
-> Agente de IA para automatizar la generacion de formularios en Mendix 10.24
+> Agente de IA para automatizar la generacion de artefactos en Mendix 10.24
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Mendix 10.24 LTS](https://img.shields.io/badge/Mendix-10.24_LTS-0595DB.svg)](https://mendix.com)
